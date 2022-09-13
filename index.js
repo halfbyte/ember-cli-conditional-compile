@@ -134,15 +134,16 @@ module.exports = {
 
     let excludes = [];
 
-    Object.keys(config.featureFlags).forEach(function(flag) {
-      if (config.includeDirByFlag && !config.featureFlags[flag] && config.includeDirByFlag[flag]) {
-        const flaggedExcludes = this._config.includeDirByFlag[flag].map(function(glob) {
-          return config.modulePrefix + '/' + glob;
-        })
-        excludes = excludes.concat(flaggedExcludes);
-      }
-    });
-
+    if (this._config.featureFlags) {
+      Object.keys(this._config.featureFlags).forEach(function(flag) {
+        if (this._config.includeDirByFlag && !this._config.featureFlags[flag] && this._config.includeDirByFlag[flag]) {
+          const flaggedExcludes = this._config.includeDirByFlag[flag].map(function(glob) {
+            return config.modulePrefix + '/' + glob;
+          })
+          excludes = excludes.concat(flaggedExcludes);
+        }
+      }, this);
+    }
     if (this.enableCompile) {
       tree = replace(tree, {
         files: [config.modulePrefix + '/initializers/ember-cli-conditional-compile-features.js'],
