@@ -1,11 +1,10 @@
-const EmberApp = require("ember-cli/lib/broccoli/ember-app");
-const Funnel = require("broccoli-funnel");
-const merge = require("lodash.merge");
-const replace = require("broccoli-replace");
-const chalk = require("chalk");
-const VersionChecker = require("ember-cli-version-checker");
-const TemplateCompiler = require("./lib/template-compiler");
-const hash = require("object-hash");
+const EmberApp = require('ember-cli/lib/broccoli/ember-app');
+const merge = require('lodash.merge');
+const replace = require('broccoli-replace');
+const chalk = require('chalk');
+const VersionChecker = require('ember-cli-version-checker');
+const TemplateCompiler = require('./lib/template-compiler');
+const hash = require('object-hash');
 const fs = require("fs");
 const path = require("path");
 
@@ -135,20 +134,25 @@ module.exports = {
 
     let excludes = [];
 
-    if (this._config.featureFlags) {
-      Object.keys(this._config.featureFlags).map(function(flag) {
-        if (
-          this._config.includeDirByFlag &&
-          !this._config.featureFlags[flag] &&
-          this._config.includeDirByFlag[flag]
-        ) {
-          excludes = excludes.concat(this._config.includeDirByFlag[flag]);
-        }
-      }, this);
-    }
+    Object.keys(config.featureFlags).forEach(function(flag) {
+      if (config.includeDirByFlag && !config.featureFlags[flag] && config.includeDirByFlag[flag]) {
+        const flaggedExcludes = this._config.includeDirByFlag[flag].map(function(glob) {
+          return config.modulePrefix + '/' + glob;
+        })
+        excludes = excludes.concat(flaggedExcludes);
+      }
+    });
 
     if (this.enableCompile) {
-      excludes = excludes.concat(/ember-cli-conditional-compile-features.js/);
+      tree = replace(tree, {
+        files: [config.modulePrefix + '/initializers/ember-cli-conditional-compile-features.js'],
+        patterns: [
+          {
+            match: /EMBER_CLI_CONDITIONAL_COMPILE_INJECTIONS/g,
+            replacement: '{}'
+          }
+        ]
+      })
     } else {
       tree = replace(tree, {
         files: [
@@ -164,9 +168,12 @@ module.exports = {
       });
     }
 
-    return new Funnel(tree, {
-      exclude: excludes,
-      description: "Funnel: Conditionally Filtered App"
-    });
+    return replace(tree, {
+      files: excludes,
+      patterns: [{
+        match: /.*/g,
+        replacement: '/**/'
+      }]
+    })
   }
 };
