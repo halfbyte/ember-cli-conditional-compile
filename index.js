@@ -153,7 +153,6 @@ module.exports = {
         }
       }, this);
     }
-
     if (this.enableCompile) {
       tree = replace(tree, {
         files: [
